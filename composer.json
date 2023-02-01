@@ -20,6 +20,12 @@
             "phpunit.xml.dist"
         ]
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/udaytonapps/tsugi-php"
+        }
+    ],
     "require": {
         "php": ">=8.2.0",
         "laravel/lumen-framework": ">=8.0.0",
