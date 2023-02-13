@@ -6,25 +6,39 @@ use Tsugi\Util\U;
 use Tsugi\Util\LTI;
 use Tsugi\Core\LTIX;
 use Tsugi\Lumen\Application;
-use Symfony\Component\HttpFoundation\Request;
+use Illuminate\Http\Request;
+use Tsugi\UI\LessonsOrchestrator;
 
 class Lessons {
 
-    const ROUTE = '/lessons';
+    const ROUTE = '/sessions';
 
     const REDIRECT = 'koseu_controllers_lessons';
 
     public static function routes(Application $app, $prefix=self::ROUTE) {
+        $app->router->get($prefix . '/{context}/{anchor}', 'Lessons@get');
+        // $app->router->get($prefix . '/{context}/badges', 'Lessons@get');
+        // /badges .get()
+        // $app->router->get($prefix . '/{context}/discussions', 'Lessons@get');
+        // /discussions .get()
+        // $app->router->get($prefix . '/{context}/progress', 'Lessons@get');
+        // /progress .get()
+
+        $app->router->get($prefix . '/{context}', 'Lessons@get');
         $app->router->get($prefix, 'Lessons@get');
         $app->router->get($prefix.'/', 'Lessons@get');
         $app->router->get('/'.self::REDIRECT, 'Lessons@get');
-        $app->router->get($prefix.'/{anchor}', 'Lessons@get');
         $app->router->get($prefix.'_launch/{anchor}', function(Request $request, $anchor = null) use ($app) {
-            return Lessons::launch($app, $anchor);
+            $redirectUrl = $request->query('redirect_url', '/');
+            $autoRegisterId = $request->query('auto_register_id');
+            if (isset($autoRegisterId)) {
+                $_SESSION["auto_register_id"] = $autoRegisterId;
+            }
+            return Lessons::launch($app, $anchor, $redirectUrl);
         });
     }
 
-    public function get(Request $request, $anchor=null)
+    public static function get(Request $request, $anchor = null, $context = null)
     {
         global $CFG, $OUTPUT;
 
@@ -41,12 +55,18 @@ class Lessons {
             }
         }
 
+        // Set login redirect
+        $path = U::rest_path();
+        $_SESSION["login_return"] = $path->full;
+
         // Load the Lesson
-        $l = new \Tsugi\UI\Lessons($CFG->lessons,$anchor);
+        $l = \Tsugi\UI\LessonsOrchestrator::getLessons($context, $anchor);
 
         $OUTPUT->header();
         $OUTPUT->bodyStart();
-        $menu = false;
+        if (file_exists($CFG->dirroot.'/../nav.php')) {
+            include $CFG->dirroot.'/../nav.php';
+        }
         $OUTPUT->topNav();
         $OUTPUT->flashMessages();
         $l->header();
@@ -58,7 +78,7 @@ class Lessons {
         $OUTPUT->footerEnd();
     }
 
-    public static function launch(Application $app, $anchor=null)
+    public static function launch(Application $app, $anchor=null, $redirectUrl)
     {
         global $CFG;
         $tsugi = $app['tsugi'];
@@ -73,7 +93,7 @@ class Lessons {
         }
 
         /// Load the Lesson
-        $l = new \Tsugi\UI\Lessons($CFG->lessons);
+        $l = \Tsugi\UI\LessonsOrchestrator::getLessons($_GET['context'] ?? null);
         if ( ! $l ) {
             $app->tsugiFlashError(__('Cannot load lessons.'));
             return redirect($redirect_path);
@@ -97,8 +117,10 @@ class Lessons {
         {
             // All good
         } else {
-            $app->tsugiFlashError(__('Missing session data required for launch'));
-            return redirect($redirect_path);
+            // Missing session data so redirect to login
+            $app->tsugiFlashError(__('You must log in to access that tool or resource.'));
+            $_SESSION["login_return"] = $path->full;
+            return redirect('login');
         }
 
         $resource_link_title = isset($lti->title) ? $lti->title : $module->title;
@@ -121,7 +143,7 @@ class Lessons {
             'user_id' => $_SESSION['user_key'],
             'lis_person_name_full' => $_SESSION['displayname'],
             'lis_person_contact_email_primary' => $_SESSION['email'],
-            'roles' => 'Learner'
+            'roles' => isset($_SESSION["admin"]) ? 'Instructor' : 'Learner',
         );
         if ( isset($_SESSION['avatar']) ) $parms['user_image'] = $_SESSION['avatar'];
 
@@ -148,6 +170,23 @@ class Lessons {
         $parms['ext_lti_form_id'] = $form_id;
 
         $endpoint = $lti->launch;
+
+        if (isset($redirectUrl) && strlen($redirectUrl) > 0) {
+            $parms['redirect_url'] = $redirectUrl;
+        }
+
+        // If auto_register_id exists, set attendee status to 'ATTENDED' for the generated key
+        // Then launch tool normally, and it will reflect the change
+        if (isset($_SESSION["auto_register_id"])) {
+            $regKey = $_SESSION["auto_register_id"];
+            try {
+                LessonsOrchestrator::autoRegisterAttendee($regKey);
+                $_SESSION["auto_register_id"] = null;
+            } catch(\Exception $e) {
+                return $e->getMessage();
+            }
+        }
+        
         $parms = LTI::signParameters($parms, $endpoint, "POST", $key, $secret,
             "Finish Launch", $CFG->wwwroot, $CFG->servicename);
 

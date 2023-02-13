@@ -5,16 +5,16 @@ namespace Koseu\Controllers;
 use Tsugi\Lumen\Application;
 use Symfony\Component\HttpFoundation\Request;
 
+use \Tsugi\Core\LTIX;
 use \Tsugi\Grades\GradeUtil;
-use Tsugi\Util\U;
 
-class Badges {
+class BadgeAdmin {
 
-    const ROUTE = '/badges';
+    const ROUTE = '/badgeadmin';
 
     public static function routes(Application $app, $prefix=self::ROUTE) {
-        $app->router->get($prefix, 'Badges@get');
-        $app->router->get($prefix.'/', 'Badges@get');
+        $app->router->get($prefix, 'BadgeAdmin@get');
+        $app->router->get($prefix.'/', 'BadgeAdmin@get');
     }
 
     public function get(Request $request)
@@ -25,19 +25,20 @@ class Badges {
             die_with_error_log('Cannot find lessons.json ($CFG->lessons)');
         }
 
-        // Set login redirect
-        $path = U::rest_path();
-        $_SESSION["login_return"] = $path->full;
-
         // Load the Lesson
         $l = \Tsugi\UI\LessonsOrchestrator::getLessons(); // TODO
 
-        // Load all the Grades so far
-        $allgrades = array();
-        if ( isset($_SESSION['id']) && isset($_SESSION['context_id'])) {
-            $rows = GradeUtil::loadGradesForCourse($_SESSION['id'], $_SESSION['context_id']);
+        // Load all the Grades so far into arrays mapped by user
+        $gradeMap = array();
+        if ( isset( $_SESSION['role']) && $_SESSION['role'] >= LTIX::ROLE_INSTRUCTOR ) {
+            $rows = GradeUtil::loadGradesForAdmin();
             foreach($rows as $row) {
-                $allgrades[$row['resource_link_id']] = $row['grade'];
+                if (!array_key_exists($row["user_id"], $gradeMap)) {
+                    $gradeMap[$row["user_id"]] = array();
+                }
+                $allgrades = $gradeMap[$row["user_id"]];
+                $allgrades[$row['link_key']] = $row['grade'];
+                $gradeMap[$row["user_id"]] = $allgrades;
             }
         }
 
@@ -48,9 +49,7 @@ class Badges {
         }
         $OUTPUT->topNav();
         $OUTPUT->flashMessages();
-        echo '<div class="container">';
-        $l->renderBadges($allgrades, false);
-        echo '</div>';
+        $l->renderBadgeAdmin($gradeMap, false);
         $OUTPUT->footer();
 
     }

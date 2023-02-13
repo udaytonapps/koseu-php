@@ -42,12 +42,18 @@ class Topics {
             }
         }
 
+        // Set login redirect
+        $path = U::rest_path();
+        $_SESSION["login_return"] = $path->full;
+
         // Load the Topic
         $t = new \Tsugi\UI\Topics($CFG->topics,$anchor);
 
         $OUTPUT->header();
         $OUTPUT->bodyStart();
-        $menu = false;
+        if (file_exists($CFG->dirroot.'/../nav.php')) {
+            include $CFG->dirroot.'/../nav.php';
+        }
         $OUTPUT->topNav($menu);
         $OUTPUT->flashMessages();
         $t->header();
@@ -98,8 +104,10 @@ class Topics {
         {
             // All good
         } else {
-            $app->tsugiFlashError(__('Missing session data required for launch'));
-            return redirect($redirect_path);
+            // Missing session data so redirect to login
+            $app->tsugiFlashError(__('You must log in to access that tool or resource.'));
+            $_SESSION["login_return"] = $path->full;
+            return redirect('login');
         }
 
         $resource_link_title = isset($lti->title) ? $lti->title : $topic->title;

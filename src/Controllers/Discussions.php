@@ -29,12 +29,18 @@ class Discussions {
             die_with_error_log('Cannot find lessons.json ($CFG->lessons)');
         }
 
+        // Set login redirect
+        $path = U::rest_path();
+        $_SESSION["login_return"] = $path->full;
+
         // Load the Lesson
-        $l = new \Tsugi\UI\Lessons($CFG->lessons);
+        $l = \Tsugi\UI\LessonsOrchestrator::getLessons(); // TODO
 
         $OUTPUT->header();
         $OUTPUT->bodyStart();
-        $menu = false;
+        if (file_exists($CFG->dirroot.'/../nav.php')) {
+            include $CFG->dirroot.'/../nav.php';
+        }
         $OUTPUT->topNav();
         $OUTPUT->flashMessages();
         $l->renderDiscussions(false);
@@ -58,7 +64,7 @@ class Discussions {
         }
 
         /// Load the Lesson
-        $l = new \Tsugi\UI\Lessons($CFG->lessons);
+        $l = \Tsugi\UI\LessonsOrchestrator::getLessons(); // TODO
         if ( ! $l ) {
             $app->tsugiFlashError(__('Cannot load lessons.'));
             return redirect($redirect_path);
@@ -76,8 +82,10 @@ class Discussions {
         {
             // All good
         } else {
-            $app->tsugiFlashError(__('Missing session data required for launch'));
-            return redirect($redirect_path);
+            // Missing session data so redirect to login
+            $app->tsugiFlashError(__('You must log in to access that Discussion.'));
+            $_SESSION["login_return"] = $path->full;
+            return redirect('login');
         }
 
         $key = isset($_SESSION['oauth_consumer_key']) ? $_SESSION['oauth_consumer_key'] : false;
@@ -126,7 +134,7 @@ class Discussions {
         $parms['ext_lti_form_id'] = $form_id;
 
         $endpoint = $lti->launch;
-        \Tsugi\UI\Lessons::absolute_url_ref($endpoint);
+        \Tsugi\UI\LessonsOrchestrator::absolute_url_ref($endpoint);
         $parms = LTI::signParameters($parms, $endpoint, "POST", $key, $secret,
             "Finish Launch", $CFG->wwwroot, $CFG->servicename);
 

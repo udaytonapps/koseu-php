@@ -17,8 +17,10 @@ class Application extends \Tsugi\Lumen\Application {
             \Koseu\Controllers\Topics::routes($this);
             \Koseu\Controllers\Discussions::routes($this);
             \Koseu\Controllers\Badges::routes($this);
+            \Koseu\Controllers\BadgeAdmin::routes($this);
             \Koseu\Controllers\Assignments::routes($this);
             \Koseu\Controllers\Courses::routes($this);
+            \Koseu\Controllers\Facilitators::routes($this);
         });
 
         $this->router->group([
