@@ -11,34 +11,35 @@ use Tsugi\UI\LessonsOrchestrator;
 
 class Lessons {
 
-    const ROUTE = '/sessions';
+    const ROUTE = '/categories';
 
     const REDIRECT = 'koseu_controllers_lessons';
 
     public static function routes(Application $app, $prefix=self::ROUTE) {
-        $app->router->get($prefix . '/{context}/{anchor}', 'Lessons@get');
-        // $app->router->get($prefix . '/{context}/badges', 'Lessons@get');
-        // /badges .get()
-        // $app->router->get($prefix . '/{context}/discussions', 'Lessons@get');
-        // /discussions .get()
-        // $app->router->get($prefix . '/{context}/progress', 'Lessons@get');
-        // /progress .get()
-
-        $app->router->get($prefix . '/{context}', 'Lessons@get');
-        $app->router->get($prefix, 'Lessons@get');
-        $app->router->get($prefix.'/', 'Lessons@get');
-        $app->router->get('/'.self::REDIRECT, 'Lessons@get');
-        $app->router->get($prefix.'_launch/{anchor}', function(Request $request, $anchor = null) use ($app) {
+        $app->router->get($prefix. '/{category}' . $prefix . '_launch/{anchor}', function(Request $request, $category = null, $anchor = null) use ($app) {
             $redirectUrl = $request->query('redirect_url', '/');
             $autoRegisterId = $request->query('auto_register_id');
             if (isset($autoRegisterId)) {
                 $_SESSION["auto_register_id"] = $autoRegisterId;
             }
-            return Lessons::launch($app, $anchor, $redirectUrl);
+            return Lessons::launch($app, $category, $anchor, $redirectUrl);
         });
+        $app->router->get($prefix . '/{category}/{module}', 'Lessons@get');
+        $app->router->get($prefix . '/{category}/{module}/{page}', 'Lessons@get');
+        // $app->router->get($prefix . '/{course}/{??module??}/badges', 'Lessons@get');
+        // /badges .get()
+        // $app->router->get($prefix . '/{course}/{??module??}/discussions', 'Lessons@get');
+        // /discussions .get()
+        // $app->router->get($prefix . '/{course}/{??module??}/progress', 'Lessons@get');
+        // /progress .get()
+
+        $app->router->get($prefix . '/{category}', 'Lessons@get');
+        $app->router->get($prefix, 'Lessons@get');
+        $app->router->get($prefix.'/', 'Lessons@get');
+        $app->router->get('/'.self::REDIRECT, 'Lessons@get');
     }
 
-    public static function get(Request $request, $anchor = null, $context = null)
+    public static function get(Request $request, $anchor = null, $category = null, $module = null, $page = null)
     {
         global $CFG, $OUTPUT;
 
@@ -60,7 +61,7 @@ class Lessons {
         $_SESSION["login_return"] = $path->full;
 
         // Load the Lesson
-        $l = \Tsugi\UI\LessonsOrchestrator::getLessons($context, $anchor);
+        $l = \Tsugi\UI\LessonsOrchestrator::getLessons($category, $module, $page);
 
         $OUTPUT->header();
         $OUTPUT->bodyStart();
@@ -70,7 +71,7 @@ class Lessons {
         $OUTPUT->topNav();
         $OUTPUT->flashMessages();
         $l->header();
-        echo('<div class="container">');
+        echo('<div class="">');
         $l->render();
         echo('</div>');
         $OUTPUT->footerStart();
@@ -78,7 +79,7 @@ class Lessons {
         $OUTPUT->footerEnd();
     }
 
-    public static function launch(Application $app, $anchor=null, $redirectUrl)
+    public static function launch(Application $app, $category = null, $anchor=null, $redirectUrl)
     {
         global $CFG;
         $tsugi = $app['tsugi'];
@@ -93,7 +94,7 @@ class Lessons {
         }
 
         /// Load the Lesson
-        $l = \Tsugi\UI\LessonsOrchestrator::getLessons($_GET['context'] ?? null);
+        $l = \Tsugi\UI\LessonsOrchestrator::getLessons($category);
         if ( ! $l ) {
             $app->tsugiFlashError(__('Cannot load lessons.'));
             return redirect($redirect_path);
@@ -138,8 +139,8 @@ class Lessons {
             'tool_consumer_info_product_family_code' => 'tsugi',
             'tool_consumer_info_version' => '1.1',
             'context_id' => $_SESSION['context_key'],
-            'context_label' => $CFG->context_title,
-            'context_title' => $CFG->context_title,
+            // 'context_label' => $CFG->context_title,
+            // 'context_title' => $CFG->context_title,
             'user_id' => $_SESSION['user_key'],
             'lis_person_name_full' => $_SESSION['displayname'],
             'lis_person_contact_email_primary' => $_SESSION['email'],
