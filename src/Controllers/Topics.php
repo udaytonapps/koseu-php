@@ -8,6 +8,7 @@ use Tsugi\Util\LTI;
 use Tsugi\Core\LTIX;
 use Tsugi\Lumen\Application;
 use Symfony\Component\HttpFoundation\Request;
+use Tsugi\UI\LessonsUIHelper;
 
 class Topics {
 
@@ -42,27 +43,27 @@ class Topics {
             }
         }
 
-        // Set login redirect
-        $path = U::rest_path();
-        $_SESSION["login_return"] = $path->full;
-
         // Load the Topic
-        $t = new \Tsugi\UI\Topics($CFG->topics,$anchor);
+        $l = new \Tsugi\UI\Topics($CFG->topics, $anchor);
+
+        $context = array();
+        $context['head'] = $l->header(true);
+        $context['container'] = $l->render(true);
+        $context['footer'] = $l->footer(true);
 
         $OUTPUT->header();
         $OUTPUT->bodyStart();
-        if (file_exists($CFG->dirroot.'/../nav.php')) {
-            include $CFG->dirroot.'/../nav.php';
+        if (file_exists($CFG->dirroot . '/../nav.php')) {
+            include $CFG->dirroot . '/../nav.php';
         }
-        $OUTPUT->topNav($menu);
+        $OUTPUT->topNav();
         $OUTPUT->flashMessages();
-        $t->header();
-        echo('<div class="container">');
-        $t->render();
-        echo('</div>');
-        $OUTPUT->footerStart();
-        $t->footer();
-        $OUTPUT->footerEnd();
+
+        $twig = LessonsUIHelper::twig();
+
+        echo $twig->render('Topics.twig', $context);
+
+        $OUTPUT->footer();
     }
 
     public static function launch(Application $app, $anchor=null)
