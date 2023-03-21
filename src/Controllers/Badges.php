@@ -39,19 +39,14 @@ class Badges
 
         /** @var CourseBase[] */
         $lessonsList = [];
-
+        $allBadgeData = [];
+        $allAwardedData = [];
         foreach ($referenceList as $key => $reference) {
             $l = \Tsugi\UI\LessonsOrchestrator::getLessons($key);
             array_push($lessonsList, $l);
-        }
-
-        // Load all the Grades so far
-        $allgrades = array();
-        if (isset($_SESSION['id']) && isset($_SESSION['context_id'])) {
-            $rows = GradeUtil::loadGradesForCourse($_SESSION['id'], $_SESSION['context_id']);
-            foreach ($rows as $row) {
-                $allgrades[$row['resource_link_id']] = $row['grade'];
-            }
+            $response = $l->getBadgeData($key, $l);
+            $allBadgeData[] = $response;
+            $allAwardedData = array_merge($allAwardedData, $response->awarded);
         }
 
         $OUTPUT->header();
@@ -63,18 +58,16 @@ class Badges
         $OUTPUT->flashMessages();
         $twig = LessonsUIHelper::twig();
 
-        $allBadgeData = [];
-        $allAwardedData = [];
-        foreach ($lessonsList as $l) {
-            $response = $l->getBadgeData($l);
-            $allBadgeData[] = $response;
-            $allAwardedData = array_merge($allAwardedData, $response->awarded);
-        }
         $twig->addFunction(new \Twig\TwigFunction('getModuleByRlid', function ($course, $resource_link_id) {
             return LessonsOrchestrator::getModuleByRlid($course, $resource_link_id);
         }));
         $twig->addFunction(new \Twig\TwigFunction('getLtiByRlid', function ($course, $resource_link_id) {
             return LessonsOrchestrator::getLtiByRlid($course, $resource_link_id);
+        }));
+        $twig->addFunction(new \Twig\TwigFunction('getModuleUrl', function ($program, $moduleAnchor) {
+            global $CFG;
+            $encodedAnchor = urlencode($moduleAnchor);
+            return "{$CFG->apphome}/programs/{$program}/{$encodedAnchor}";
         }));
 
         // Render browse page
@@ -82,8 +75,7 @@ class Badges
             'allBadges' => $allBadgeData,
             'allAwarded' => $allAwardedData,
             'badgeUrl' => $CFG->badge_url,
-            'allGrades' => $allgrades,
-            'loggedIn' => isset($_SESSION['id']) && isset($_SESSION['context_id'])
+            'loggedIn' => isset($_SESSION['id']) // TODO
         ]);
         $OUTPUT->footer();
     }
