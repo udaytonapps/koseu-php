@@ -34,7 +34,7 @@ class Discussions {
         $_SESSION["login_return"] = $path->full;
 
         // Load the Lesson
-        $l = \Tsugi\UI\LessonsOrchestrator::getLessons(); // TODO
+        $l = \Tsugi\UI\LessonsOrchestrator::getLessons('ATLS'); // TODO
 
         $OUTPUT->header();
         $OUTPUT->bodyStart();

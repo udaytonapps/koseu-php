@@ -146,7 +146,7 @@ class Lessons
         if (isset($_SESSION['secret'])) {
             $secret = LTIX::decrypt_secret($_SESSION['secret']);
         }
-
+        $context_key = 'course:' . md5("{$programAnchor}_{$module->anchor}");
         $resource_link_id = $lti->resource_link_id;
         $parms = array(
             'lti_message_type' => 'basic-lti-launch-request',
@@ -154,7 +154,7 @@ class Lessons
             'resource_link_title' => $resource_link_title,
             'tool_consumer_info_product_family_code' => 'tsugi',
             'tool_consumer_info_version' => '1.1',
-            'context_id' => "{$programAnchor}_{$moduleAnchor}",
+            'context_id' => $context_key,
             'context_label' => $module->title,
             'context_title' => $module->title,
             'user_id' => $_SESSION['user_key'],
