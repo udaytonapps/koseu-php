@@ -70,7 +70,7 @@ class Badges
             return "{$CFG->apphome}/programs/{$program}/{$encodedAnchor}";
         }));
 
-        // Render browse page
+        // Render badges page
         echo $twig->render('badges.twig', [
             'allBadges' => $allBadgeData,
             'allAwarded' => $allAwardedData,

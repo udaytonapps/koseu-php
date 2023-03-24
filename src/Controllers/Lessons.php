@@ -19,7 +19,9 @@ class Lessons
     public static function routes(Application $app, $prefix = self::ROUTE)
     {
         $app->router->get($prefix . '/{program}/{module}/lti-launch/{ltiAnchor}', function (Request $request, $program = null, $module = null, $ltiAnchor = null) use ($app) {
-            $redirectUrl = $request->query('redirect_url', '/');
+            // Launching from a module (such as registration for a module)
+            global $CFG;
+            $redirectUrl = $request->query('redirect_url', "{$CFG->apphome}/programs/{$program}/{$module}");
             $autoRegisterId = $request->query('auto_register_id');
             if (isset($autoRegisterId)) {
                 $_SESSION["auto_register_id"] = $autoRegisterId;
@@ -27,6 +29,7 @@ class Lessons
             return Lessons::launch($app, $program, $module, null, $ltiAnchor, $redirectUrl);
         });
         $app->router->get($prefix . '/{program}/{module}/{page}/lti-launch/{ltiAnchor}', function (Request $request, $program = null, $module = null, $page = null, $ltiAnchor = null) use ($app) {
+            // Launching from a page (such as a quiz in an ASYNC course page)
             $redirectUrl = $request->query('redirect_url', '/');
             // $autoRegisterId = $request->query('auto_register_id');
             // if (isset($autoRegisterId)) {
@@ -89,7 +92,7 @@ class Lessons
         $OUTPUT->footerEnd();
     }
 
-    public static function launch(Application $app, $programAnchor = null, $moduleAnchor = null, $pageAnchor = null, $ltiAnchor = null, $redirectUrl)
+    public static function launch(Application $app, $program = null, $moduleAnchor = null, $pageAnchor = null, $ltiAnchor = null, $redirectUrl)
     {
         global $CFG;
         // $tsugi = $app['tsugi'];
@@ -98,13 +101,8 @@ class Lessons
         $redirect_path = U::addSession($path->parent);
         if ($redirect_path == '') $redirect_path = '/';
 
-        if (!isset($CFG->lessons)) {
-            $app->tsugiFlashError(__('Cannot find lessons.json ($CFG->lessons)'));
-            return redirect($redirect_path);
-        }
-
         /// Load the Lesson
-        $l = \Tsugi\UI\LessonsOrchestrator::getLessons($programAnchor);
+        $l = \Tsugi\UI\LessonsOrchestrator::getLessons($program);
         if (!$l) {
             $app->tsugiFlashError(__('Cannot load lessons.'));
             return redirect($redirect_path);
@@ -146,8 +144,9 @@ class Lessons
         if (isset($_SESSION['secret'])) {
             $secret = LTIX::decrypt_secret($_SESSION['secret']);
         }
-        $context_key = 'course:' . md5("{$programAnchor}_{$module->anchor}");
+        $context_key = 'course:' . md5("{$program}_{$module->anchor}");
         $resource_link_id = $lti->resource_link_id;
+
         $parms = array(
             'lti_message_type' => 'basic-lti-launch-request',
             'resource_link_id' => $resource_link_id,
@@ -161,6 +160,7 @@ class Lessons
             'lis_person_name_full' => $_SESSION['displayname'],
             'lis_person_contact_email_primary' => $_SESSION['email'],
             'roles' => isset($_SESSION["admin"]) ? 'Instructor' : 'Learner',
+            'lessons_path' => LessonsOrchestrator::getOrchestratorRoot() . LessonsOrchestrator::getRelativeContext($program) . '/lessons.json',
         );
         if (isset($_SESSION['avatar'])) $parms['user_image'] = $_SESSION['avatar'];
 
@@ -175,12 +175,11 @@ class Lessons
             }
         }
 
-        // Might need for some cases?
-        // $return_url = $path->parent . '/' . str_replace('_launch', '', $path->controller) . '/' . $module->anchor;
+        if (isset($pageAnchor)) {
+            $redirectUrl .= "/{$pageAnchor}";
+        }
 
-        $return_url = "{$CFG->apphome}/programs/{$programAnchor}/{$moduleAnchor}/{$pageAnchor}";
-
-        $parms['launch_presentation_return_url'] = $return_url;
+        $parms['launch_presentation_return_url'] = $redirectUrl;
 
         $sess_key = 'tsugi_top_nav_' . $CFG->wwwroot;
         if (isset($_SESSION[$sess_key])) {
