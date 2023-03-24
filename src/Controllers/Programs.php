@@ -10,15 +10,15 @@ use \Tsugi\Grades\GradeUtil;
 use Tsugi\UI\LessonsUIHelper;
 use Tsugi\Util\U;
 
-class Browse
+class Programs
 {
 
-    const ROUTE = '/browse';
+    const ROUTE = '/programs';
 
     public static function routes(Application $app, $prefix = self::ROUTE)
     {
-        $app->router->get($prefix, 'Browse@get');
-        $app->router->get($prefix . '/', 'Browse@get');
+        $app->router->get($prefix, 'Programs@get');
+        $app->router->get($prefix . '/', 'Programs@get');
     }
 
     public function get(Request $request)
@@ -45,6 +45,7 @@ class Browse
         }
 
         $OUTPUT->header();
+        LessonsUIHelper::renderGeneralHeader();
         $OUTPUT->bodyStart();
         if (file_exists($CFG->dirroot . '/../nav.php')) {
             include $CFG->dirroot . '/../nav.php';
@@ -52,14 +53,19 @@ class Browse
         $OUTPUT->topNav();
         $OUTPUT->flashMessages();
 
-        $twig = LessonsUIHelper::twig();
+        // Get all courses
         $allCourses = [];
         foreach ($lessonsList as $l) {
-            $courseData = $l->getModuleData();
-            array_push($allCourses, $courseData);
+            $pageData = $l->getAllProgramsPageData();
+            $allCourses[] = $pageData;
         }
-        // Render browse page
-        echo $twig->render('browse.twig', ['allCourses' => $allCourses]);
+        // Get courses that have been started
+
+        // Get courses that are complete
+
+        // Render programs page
+        $twig = LessonsUIHelper::twig();
+        echo $twig->render('programs.twig', ['allCourses' => $allCourses]);
 
         $OUTPUT->footer();
     }
