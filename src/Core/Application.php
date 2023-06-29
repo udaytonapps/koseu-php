@@ -14,7 +14,6 @@ class Application extends \Tsugi\Lumen\Application {
             'namespace' => 'Koseu\Controllers',
         ], function () {
             \Koseu\Controllers\Lessons::routes($this);
-            \Koseu\Controllers\Topics::routes($this);
             \Koseu\Controllers\Discussions::routes($this);
             \Koseu\Controllers\Badges::routes($this);
             \Koseu\Controllers\BadgeAdmin::routes($this);
