@@ -30,7 +30,8 @@ class Lessons
         });
         $app->router->get($prefix . '/{program}/{module}/{page}/lti-launch/{ltiAnchor}', function (Request $request, $program = null, $module = null, $page = null, $ltiAnchor = null) use ($app) {
             // Launching from a page (such as a quiz in an ASYNC course page)
-            $redirectUrl = $request->query('redirect_url', '/');
+            global $CFG;
+            $redirectUrl = $CFG->apphome."/programs/".$program."/".$module;
             // $autoRegisterId = $request->query('auto_register_id');
             // if (isset($autoRegisterId)) {
             //     $_SESSION["auto_register_id"] = $autoRegisterId;
