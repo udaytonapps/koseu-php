@@ -26,7 +26,8 @@ class BadgeAdmin {
         }
 
         // Load the Lesson
-        $l = \Tsugi\UI\LessonsOrchestrator::getLessons(); // TODO
+        // TODO: Iterate over all programs (will also need to update badge display functions in CourseBase.php)
+        $l = \Tsugi\UI\LessonsOrchestrator::getLessons('col'); // TODO: remove hard-coding of 'col' and iterate over all programs
 
         // Load all the Grades so far into arrays mapped by user
         $gradeMap = array();
@@ -49,7 +50,7 @@ class BadgeAdmin {
         }
         $OUTPUT->topNav();
         $OUTPUT->flashMessages();
-        $l->renderBadgeAdmin($gradeMap, false);
+        $l->renderBadgeAdmin($gradeMap, $l, false);
         $OUTPUT->footer();
 
     }
