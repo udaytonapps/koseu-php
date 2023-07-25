@@ -65,7 +65,11 @@ class Programs
 
         // Render programs page
         $twig = LessonsUIHelper::twig();
-        echo $twig->render('programs.twig', ['allCourses' => $allCourses]);
+        echo $twig->render('programs.twig', [
+            'allCourses' => $allCourses,
+            'allProgramsImage' => $CFG->wwwroot . '/vendor/tsugi/lib/src/UI/assets/UD-COL-110.jpg',
+            'allProgramsImageAlt' => 'University of Dayton Chapel'
+        ]);
 
         $OUTPUT->footer();
     }
