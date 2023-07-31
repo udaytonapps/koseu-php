@@ -26,9 +26,12 @@ class BadgeAdmin {
         }
 
         // Load the Lesson
-        // TODO: Iterate over all programs (will also need to update badge display functions in CourseBase.php)
-        $l = \Tsugi\UI\LessonsOrchestrator::getLessons('col'); // TODO: remove hard-coding of 'col' and iterate over all programs
-
+        $referenceList = \Tsugi\UI\LessonsOrchestrator::getLessonsReference();
+        $l = [];
+        foreach ($referenceList as $key => $reference) {
+            $lessonNow = \Tsugi\UI\LessonsOrchestrator::getLessons($key);
+            array_push($l, $lessonNow);
+        }
         // Load all the Grades so far into arrays mapped by user
         $gradeMap = array();
         if ( isset( $_SESSION['role']) && $_SESSION['role'] >= LTIX::ROLE_INSTRUCTOR ) {
@@ -50,7 +53,9 @@ class BadgeAdmin {
         }
         $OUTPUT->topNav();
         $OUTPUT->flashMessages();
-        $l->renderBadgeAdmin($gradeMap, $l, false);
+        foreach ($l as $lessonNow2){
+            $lessonNow2->renderBadgeAdmin($gradeMap, $lessonNow2, false);
+        }
         $OUTPUT->footer();
 
     }
