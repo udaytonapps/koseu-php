@@ -41,7 +41,9 @@ class Programs
 
         foreach ($referenceList as $key => $reference) {
             $l = \Tsugi\UI\LessonsOrchestrator::getLessons($key);
-            array_push($lessonsList, $l);
+            if($CFG->show_hidden_modules || !isset($l->course->hidden) || !$l->course->hidden){
+                array_push($lessonsList, $l);
+            }
         }
 
         $OUTPUT->header();
