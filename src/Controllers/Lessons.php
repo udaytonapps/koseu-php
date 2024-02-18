@@ -93,7 +93,7 @@ class Lessons
         $OUTPUT->footerEnd();
     }
 
-    public static function launch(Application $app, $program = null, $moduleAnchor = null, $pageAnchor = null, $ltiAnchor = null, $redirectUrl)
+    public static function launch(Application $app, $program = null, $moduleAnchor = null, $pageAnchor = null, $ltiAnchor = null, $redirectUrl = null)
     {
         global $CFG;
         // $tsugi = $app['tsugi'];
@@ -176,12 +176,6 @@ class Lessons
             }
         }
 
-        if (isset($pageAnchor)) {
-            $redirectUrl .= "/{$pageAnchor}";
-        }
-
-        $parms['launch_presentation_return_url'] = $redirectUrl;
-
         $sess_key = 'tsugi_top_nav_' . $CFG->wwwroot;
         if (isset($_SESSION[$sess_key])) {
             // $parms['ext_tsugi_top_nav'] = $_SESSION[$sess_key];
@@ -201,7 +195,11 @@ class Lessons
         }
 
         if (isset($redirectUrl) && strlen($redirectUrl) > 0) {
+            if (isset($pageAnchor)) {
+                $redirectUrl .= "/{$pageAnchor}";
+            }
             $parms['redirect_url'] = $redirectUrl;
+            $parms['launch_presentation_return_url'] = $redirectUrl;
         }
 
         // If auto_register_id exists, set attendee status to 'ATTENDED' for the generated key
