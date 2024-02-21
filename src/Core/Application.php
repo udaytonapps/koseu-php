@@ -22,6 +22,7 @@ class Application extends \Tsugi\Lumen\Application {
             \Koseu\Controllers\Facilitators::routes($this);
             \Koseu\Controllers\Programs::routes($this);
             \Koseu\Controllers\Registrations::routes($this);
+            \Koseu\Controllers\Administration::routes($this);
         });
 
         $this->router->group([
