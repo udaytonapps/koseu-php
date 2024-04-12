@@ -23,12 +23,12 @@
     "repositories": [
         {
             "type": "vcs",
-            "url": "https://github.com/udaytonapps/tsugi-php"
+            "url": "https://bitbucket.udayton.edu/scm/uela/tsugi-php"
         }
     ],
     "require": {
         "php": ">=8.2.0",
         "laravel/lumen-framework": ">=8.0.0",
-        "tsugi/lib": "dev-master#e4fbf3a1c2b02aea675878d5c098daaf38b0e105"
+        "tsugi/lib": "dev-test-cherry-pick"
     }
 }
