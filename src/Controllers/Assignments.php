@@ -64,7 +64,6 @@ class Assignments
         }
         $OUTPUT->topNav();
         $OUTPUT->flashMessages();
-        $l->renderAssignments($allgrades, $alldates, false);
 
         $twig = LessonsUIHelper::twig();
 
